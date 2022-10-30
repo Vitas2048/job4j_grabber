@@ -17,9 +17,7 @@ import static org.quartz.SimpleScheduleBuilder.*;
 
 public class AlertRabbit {
 
-    private Connection connection;
-
-    public static Properties prop() throws IOException {
+    public static Properties loadProperties() throws IOException {
         Properties prop = new Properties();
         try (InputStream in = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
             prop.load(in);
@@ -28,12 +26,12 @@ public class AlertRabbit {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException {
-        String url = prop().getProperty("url");
-        String login = prop().getProperty("login");
-        String password = prop().getProperty("password");
-        Class.forName(prop().getProperty("class"));
-        Connection connection = DriverManager.getConnection(url, login, password);
-        try {
+        Properties prop = loadProperties();
+        String url = prop.getProperty("url");
+        String login = prop.getProperty("login");
+        String password = prop.getProperty("password");
+        Class.forName(prop.getProperty("class"));
+        try (Connection connection = DriverManager.getConnection(url, login, password)) {
             List<Long> store = new ArrayList<>();
             Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
@@ -44,7 +42,7 @@ public class AlertRabbit {
                     .usingJobData(data)
                     .build();
             SimpleScheduleBuilder times = simpleSchedule()
-                    .withIntervalInSeconds(5)
+                    .withIntervalInSeconds(Integer.parseInt(prop.getProperty("rabbit.interval")))
                     .repeatForever();
             Trigger trigger = newTrigger()
                     .startNow()
