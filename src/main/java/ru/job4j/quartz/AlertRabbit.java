@@ -51,7 +51,7 @@ public class AlertRabbit {
                     .withSchedule(times)
                     .build();
             scheduler.scheduleJob(job, trigger);
-            Thread.sleep(5000);
+            Thread.sleep(10000);
             scheduler.shutdown();
             System.out.println(store);
         } catch (Exception se) {
@@ -79,4 +79,4 @@ public class AlertRabbit {
             }
         }
     }
-    }
+}
