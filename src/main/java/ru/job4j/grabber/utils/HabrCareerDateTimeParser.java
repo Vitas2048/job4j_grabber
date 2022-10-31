@@ -10,7 +10,7 @@ public class HabrCareerDateTimeParser implements DateTimeParser {
 
     @Override
     public LocalDateTime parse(String parse) {
-        ZonedDateTime p = ZonedDateTime.parse(parse);
-        return p.toLocalDateTime();
+        ZonedDateTime parsedString = ZonedDateTime.parse(parse);
+        return parsedString.toLocalDateTime();
     }
 }
