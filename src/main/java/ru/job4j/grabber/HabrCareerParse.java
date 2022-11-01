@@ -66,7 +66,7 @@ public class HabrCareerParse implements Parse {
         Element titleElement = element.select(".vacancy-card__title").first();
         Element linkElement = titleElement.child(0);
         LocalDateTime dateTime = dateTimeParser.parse(dateElement.child(0).attr("datetime"));
-        String postLink = String.format("https://career.habr.com/%s", linkElement.attr("href"));
+        String postLink = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
         String title = titleElement.text();
         String descript = retrieveDescription(postLink);
         return new Post(title, postLink, descript, dateTime);
@@ -77,7 +77,7 @@ public class HabrCareerParse implements Parse {
     public List<Post> list(String link) {
         List<Post> posts = new ArrayList<>();
         for (int i = 1; i <= PAGE_NUMBERS; i++) {
-        Connection connection = Jsoup.connect(String.format(link, i + 1));
+        Connection connection = Jsoup.connect(String.format(link, i));
         Document document = null;
         try {
             document = connection.get();
