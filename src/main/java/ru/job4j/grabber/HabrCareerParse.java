@@ -5,11 +5,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.job4j.grabber.utils.DateTimeParser;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Properties;
 
 public class HabrCareerParse implements Parse {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PsqlStore.class.getName());
 
     public static final int PAGE_NUMBERS = 5;
 
@@ -35,11 +37,11 @@ public class HabrCareerParse implements Parse {
 
     private static String retrieveDescription(String link) {
         Connection connection = Jsoup.connect(link);
-        Document document;
+        Document document = null;
         try {
             document = connection.get();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.error("RuntimeException", e);
         }
         Element descriptionElement = document.select(".style-ugc").first();
         return descriptionElement.text();
@@ -50,14 +52,13 @@ public class HabrCareerParse implements Parse {
         try (InputStream in = HabrCareerParse.class.getClassLoader().getResourceAsStream("post.properties")) {
             properties.load(in);
             Parse parse = new HabrCareerParse(new HabrCareerDateTimeParser());
-            PsqlStore psqlStore = new PsqlStore(properties);
-            List<Post> list = parse.list(PAGE_NUM);
-            list.forEach(psqlStore::save);
-            list = psqlStore.getAll();
-            list.forEach(System.out::println);
-            psqlStore.close();
+            try (PsqlStore psqlStore = new PsqlStore(properties)) {
+                List<Post> list = parse.list(PAGE_NUM);
+                list.forEach(psqlStore::save);
+                list = psqlStore.getAll();
+                list.forEach(System.out::println);
+            }
         }
-
     }
 
     private Post parsePost(Element element) {
@@ -77,11 +78,11 @@ public class HabrCareerParse implements Parse {
         List<Post> posts = new ArrayList<>();
         for (int i = 1; i <= PAGE_NUMBERS; i++) {
         Connection connection = Jsoup.connect(String.format(link, i + 1));
-        Document document;
+        Document document = null;
         try {
             document = connection.get();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.error("RuntimeException", e);
         }
             Elements rows = document.select(".vacancy-card__inner");
             rows.forEach(row -> posts.add(parsePost(row)));

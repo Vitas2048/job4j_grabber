@@ -1,5 +1,7 @@
 package ru.job4j.grabber;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.job4j.grabber.Post;
 import ru.job4j.grabber.Store;
 
@@ -11,6 +13,8 @@ import java.util.Properties;
 
 public class PsqlStore implements Store, AutoCloseable {
     private Connection cnn;
+
+    private static final Logger LOG = LoggerFactory.getLogger(PsqlStore.class.getName());
 
     public PsqlStore(Properties cfg) {
         try {
@@ -24,20 +28,27 @@ public class PsqlStore implements Store, AutoCloseable {
         try {
             cnn = DriverManager.getConnection(url, login, password);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOG.error("RuntimeException", e);
         }
     }
 
     @Override
     public void save(Post post) {
-        try (var statement = cnn.prepareStatement("insert into post(name, text, link, created) values(?, ?, ?, ?)")) {
+        try (var statement = cnn.prepareStatement("insert into post(name, text, link, created) values(?, ?, ?, ?) on conflict (?) do update set link = ?", Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, post.getTitle());
             statement.setString(2, post.getDescription());
             statement.setString(3, post.getLink());
             statement.setTimestamp(4, Timestamp.valueOf(post.getCreated()));
+            statement.setString(5, post.getLink());
+            statement.setString(6, post.getLink());
             statement.execute();
+            try (ResultSet genKeys = statement.getGeneratedKeys()) {
+                if (genKeys.next()) {
+                    post.setId(genKeys.getInt(1));
+                }
+            }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOG.error("RuntimeException", e);
         }
     }
 
@@ -50,7 +61,7 @@ public class PsqlStore implements Store, AutoCloseable {
                 list.add(useSelection(selection));
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOG.error("RuntimeException", e);
         }
         return list;
     }
@@ -65,7 +76,7 @@ public class PsqlStore implements Store, AutoCloseable {
                 post = useSelection(selection);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            LOG.error("RuntimeException", e);
         }
         return post;
     }
