@@ -8,10 +8,14 @@ import org.jsoup.select.Elements;
 import ru.job4j.grabber.utils.DateTimeParser;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class HabrCareerParse implements Parse {
 
@@ -41,10 +45,19 @@ public class HabrCareerParse implements Parse {
         return descriptionElement.text();
     }
 
-    public static void main(String[] args) {
-        Parse parse = new HabrCareerParse(new HabrCareerDateTimeParser());
-        List<Post> list = parse.list(PAGE_NUM);
-        list.forEach(System.out::println);
+    public static void main(String[] args) throws Exception {
+        Properties properties = new Properties();
+        try (InputStream in = HabrCareerParse.class.getClassLoader().getResourceAsStream("post.properties")) {
+            properties.load(in);
+            Parse parse = new HabrCareerParse(new HabrCareerDateTimeParser());
+            PsqlStore psqlStore = new PsqlStore(properties);
+            List<Post> list = parse.list(PAGE_NUM);
+            list.forEach(psqlStore::save);
+            list = psqlStore.getAll();
+            list.forEach(System.out::println);
+            psqlStore.close();
+        }
+
     }
 
     private Post parsePost(Element element) {
