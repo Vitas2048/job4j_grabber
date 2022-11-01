@@ -34,13 +34,12 @@ public class PsqlStore implements Store, AutoCloseable {
 
     @Override
     public void save(Post post) {
-        try (var statement = cnn.prepareStatement("insert into post(name, text, link, created) values(?, ?, ?, ?) on conflict (?) do update set link = ?", Statement.RETURN_GENERATED_KEYS)) {
+        try (var statement = cnn.prepareStatement("insert into post(name, text, link, created) values(?, ?, ?, ?) on conflict (link) do update set link = ?", Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, post.getTitle());
             statement.setString(2, post.getDescription());
             statement.setString(3, post.getLink());
             statement.setTimestamp(4, Timestamp.valueOf(post.getCreated()));
             statement.setString(5, post.getLink());
-            statement.setString(6, post.getLink());
             statement.execute();
             try (ResultSet genKeys = statement.getGeneratedKeys()) {
                 if (genKeys.next()) {
