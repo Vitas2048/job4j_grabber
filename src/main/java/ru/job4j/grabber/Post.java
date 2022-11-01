@@ -88,7 +88,7 @@ public class Post {
 
     @Override
     public String toString() {
-        return String.format("id = %s, title = %s, link = %s, description = %s, created = %s", id, title, link, description, created);
+        return String.format("№%s%n%s%nСсылка:%s%nОписание:%s%nДата публикации:%s", id, title, link, description, created);
     }
 
 }
