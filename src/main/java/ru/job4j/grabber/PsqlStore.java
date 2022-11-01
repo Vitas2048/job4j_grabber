@@ -12,9 +12,10 @@ import java.util.List;
 import java.util.Properties;
 
 public class PsqlStore implements Store, AutoCloseable {
-    private Connection cnn;
 
     private static final Logger LOG = LoggerFactory.getLogger(PsqlStore.class.getName());
+
+    private Connection cnn;
 
     public PsqlStore(Properties cfg) {
         try {
@@ -34,12 +35,14 @@ public class PsqlStore implements Store, AutoCloseable {
 
     @Override
     public void save(Post post) {
-        try (var statement = cnn.prepareStatement("insert into post(name, text, link, created) values(?, ?, ?, ?) on conflict (link) do update set link = ?", Statement.RETURN_GENERATED_KEYS)) {
+        String link = post.getLink();
+        try (var statement = cnn.prepareStatement("insert into post(name, text, link, created)"
+                + " values(?, ?, ?, ?) on conflict (link) do update set link = ?", Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, post.getTitle());
             statement.setString(2, post.getDescription());
-            statement.setString(3, post.getLink());
+            statement.setString(3, link);
             statement.setTimestamp(4, Timestamp.valueOf(post.getCreated()));
-            statement.setString(5, post.getLink());
+            statement.setString(5, link);
             statement.execute();
             try (ResultSet genKeys = statement.getGeneratedKeys()) {
                 if (genKeys.next()) {

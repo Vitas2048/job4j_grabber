@@ -19,6 +19,8 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 public class Grabber implements Grab {
 
+    private static final String LINK = "https://career.habr.com/vacancies/java_developer?page=%s";
+
     private static final Logger LOG = LoggerFactory.getLogger(PsqlStore.class.getName());
     private final Properties cfg = new Properties();
 
@@ -63,7 +65,7 @@ public class Grabber implements Grab {
             JobDataMap map = context.getJobDetail().getJobDataMap();
             Store store = (Store) map.get("store");
             Parse parse = (Parse) map.get("parse");
-            List<Post> posts = parse.list("https://career.habr.com/vacancies/java_developer?page=%s");
+            List<Post> posts = parse.list(LINK);
             posts.forEach(store::save);
             System.out.println("done, repeat in 1 minute");
         }
