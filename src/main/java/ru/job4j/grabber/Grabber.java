@@ -67,7 +67,7 @@ public class Grabber implements Grab {
             Parse parse = (Parse) map.get("parse");
             List<Post> posts = parse.list(LINK);
             posts.forEach(store::save);
-            System.out.println("done, repeat in 1 minute");
+            LOG.info("done, repeat in 1 minute");
         }
     }
 
